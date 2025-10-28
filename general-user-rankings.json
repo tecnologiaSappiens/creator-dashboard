@@ -1,0 +1,66 @@
+{
+  "topAccuracy": [
+    {
+      "place": 1,
+      "userName": "Thailine Teixeira Dos Santos",
+      "rate": 97.26,
+      "rankingType": "accuracy"
+    },
+    {
+      "place": 2,
+      "userName": "Jamile Marques",
+      "rate": 95.24,
+      "rankingType": "accuracy"
+    },
+    {
+      "place": 3,
+      "userName": "Marisa Rocha Freire",
+      "rate": 94.12,
+      "rankingType": "accuracy"
+    },
+    {
+      "place": 4,
+      "userName": "Eduarda Amaral Dos Anjos",
+      "rate": 93.75,
+      "rankingType": "accuracy"
+    },
+    {
+      "place": 5,
+      "userName": "Gabriel Rocha Ferreira",
+      "rate": 86.96,
+      "rankingType": "accuracy"
+    }
+  ],
+  "topError": [
+    {
+      "place": 1,
+      "userName": "Brenda Santos Silva",
+      "rate": 36.36,
+      "rankingType": "error"
+    },
+    {
+      "place": 2,
+      "userName": "Samira Sousa Pereira",
+      "rate": 25,
+      "rankingType": "error"
+    },
+    {
+      "place": 3,
+      "userName": "Márjorie Wilson Silva Dantas",
+      "rate": 22.73,
+      "rankingType": "error"
+    },
+    {
+      "place": 4,
+      "userName": "Maria Luiza Tavares",
+      "rate": 20,
+      "rankingType": "error"
+    },
+    {
+      "place": 5,
+      "userName": "Micaele Oliveira Gonçalves",
+      "rate": 14.29,
+      "rankingType": "error"
+    }
+  ]
+}

@@ -24,31 +24,66 @@
       max-width: 1200px;
       margin: 0 auto 20px;
       display: flex;
-      gap: 15px;
       justify-content: center;
+      padding: 0 20px;
     }
     
-    .nav-button {
-      background: #6001AE;
-      color: white;
-      border: none;
-      padding: 15px 40px;
-      font-size: 16px;
-      border-radius: 8px;
-      cursor: pointer;
+    .dropdown-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      max-width: 400px;
+    }
+    
+    .dropdown-label {
+      font-size: 14px;
       font-weight: 600;
-      transition: all 0.3s;
+      color: #6001AE;
+      text-align: center;
       font-family: 'Outfit', sans-serif;
     }
     
-    .nav-button:hover {
-      background: #8B3FD9;
+    .report-dropdown {
+      width: 100%;
+      padding: 15px 20px;
+      font-size: 16px;
+      font-weight: 600;
+      font-family: 'Outfit', sans-serif;
+      color: #2C005E;  /* ← FIXED: Dark purple text */
+      background: white;  /* ← White background */
+      border: 2px solid #6001AE;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236001AE' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 15px center;
+      background-size: 20px;
+      padding-right: 45px;
+    }
+
+    .report-dropdown:hover {
+      background: #f8f3ff;  /* ← Light purple on hover */
+      border-color: #8B3FD9;
       transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(96, 1, 174, 0.2);
+    }
+
+    .report-dropdown:focus {
+      outline: none;
+      border-color: #8B3FD9;
+      box-shadow: 0 0 0 3px rgba(96, 1, 174, 0.1);
     }
     
-    .nav-button.active {
-      background: #2C005E;
-      box-shadow: 0 4px 15px rgba(96, 1, 174, 0.4);
+    .report-dropdown option {
+      background: white;
+      color: #2C005E;
+      padding: 10px;
+      font-weight: 600;
     }
     
     .container {
@@ -171,6 +206,45 @@
       background: #f9f9f9;
     }
     
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    
+    .loading-overlay.hidden {
+      display: none;
+    }
+    
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #6001AE;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      margin-top: 20px;
+      color: #6001AE;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
     @media (max-width: 768px) {
       table {
         font-size: 14px;
@@ -235,13 +309,21 @@
       }
       
       .navigation {
-        flex-direction: column;
-        gap: 10px;
+        padding: 0 20px;
       }
       
-      .nav-button {
-        width: 100%;
-        padding: 12px 20px;
+      .dropdown-container {
+        max-width: 100%;
+      }
+      
+      .report-dropdown {
+        font-size: 14px;
+        padding: 12px 15px;
+        padding-right: 40px;
+      }
+      
+      .dropdown-label {
+        font-size: 13px;
       }
     }
     
@@ -335,40 +417,52 @@
       color: white;
       font-weight: 600;
       transition: width 1s ease-in-out;
+      min-width: 50px;
     }
   </style>
 </head>
 <body>
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-text">Carregando dados...</div>
+  </div>
+
   <div class="navigation">
-    <button class="nav-button active" onclick="showReport('general')">📊 Relatório Geral</button>
-    <button class="nav-button" onclick="showReport('blome')">🌸 Módulo Bloomé</button>
+    <div class="dropdown-container">
+      <label for="report-selector" class="dropdown-label">Selecione o Relatório:</label>
+      <select id="report-selector" class="report-dropdown" onchange="handleReportChange(this.value)">
+        <option value="general">📊 Relatório Geral</option>
+        <option value="blome">🌸 Módulo Bloomé</option>
+      </select>
+    </div>
   </div>
 
   <!-- RELATÓRIO GERAL -->
   <div id="general-report" class="container active">
     <div class="header">
       <h1>📊 Relatório de Uso - NathFarma</h1>
-      <p>Plataforma Sappie - Outubro 2025</p>
+      <p>Plataforma Sappie - <span id="report-date-general">Outubro 2025</span></p>
     </div>
     
     <div class="content">
       <div class="section">
         <h2 class="section-title">📈 Visão Geral</h2>
-        <div class="stats-grid">
+        <div class="stats-grid" id="stats-grid-general">
           <div class="stat-card">
-            <div class="stat-number">33</div>
+            <div class="stat-number" id="total-users-general">0</div>
             <div class="stat-label">Usuários Totais</div>
           </div>
           <div class="stat-card">
-            <div class="stat-number">6</div>
+            <div class="stat-number" id="active-users-general">0</div>
             <div class="stat-label">Usuários Ativos</div>
           </div>
           <div class="stat-card">
-            <div class="stat-number">27</div>
+            <div class="stat-number" id="inactive-users-general">0</div>
             <div class="stat-label">Usuários Inativos</div>
           </div>
           <div class="stat-card">
-            <div class="stat-number">611</div>
+            <div class="stat-number" id="total-flashcards-general">611</div>
             <div class="stat-label">Total de Flashcards do Produto</div>
           </div>
         </div>
@@ -376,21 +470,21 @@
         <div class="highlight-box">
           <h3>💡 Taxa de Ativação</h3>
           <div class="progress-bar">
-            <div class="progress-fill" style="width: 18.18%;">18.18%</div>
+            <div class="progress-fill" id="activation-rate-general" style="width: 0%;">0%</div>
           </div>
-          <p style="margin-top: 15px;"><strong>6 de 33 usuários</strong> estão ativamente utilizando a plataforma.</p>
+          <p style="margin-top: 15px;" id="activation-text-general"><strong>Carregando...</strong></p>
         </div>
       </div>
 
       <div class="section">
         <h2 class="section-title">🎯 Métricas de Engajamento</h2>
-        <div class="stats-grid">
+        <div class="stats-grid" id="engagement-stats-general">
           <div class="stat-card">
-            <div class="stat-number">237</div>
+            <div class="stat-number" id="total-studied-general">0</div>
             <div class="stat-label">Flashcards Estudados</div>
           </div>
           <div class="stat-card">
-            <div class="stat-number">81.88%</div>
+            <div class="stat-number" id="accuracy-rate-general">0%</div>
             <div class="stat-label">Taxa de Acerto Média</div>
           </div>
         </div>
@@ -398,9 +492,9 @@
         <div class="highlight-box">
           <h3>📊 Progresso do Treinamento</h3>
           <div class="progress-bar">
-            <div class="progress-fill" style="width: 15%; min-width: 15%;">1.19%</div>
+            <div class="progress-fill" id="completion-rate-general" style="width: 0%; min-width: 50px;">0%</div>
           </div>
-          <p style="margin-top: 15px;"><strong>Média de 7.18 flashcards por usuário</strong> (1.19% do produto de 611 flashcards)</p>
+          <p style="margin-top: 15px;" id="completion-text-general"><strong>Carregando...</strong></p>
         </div>
         
         <div class="chart-container">
@@ -414,7 +508,7 @@
           <canvas id="topUsersChart1"></canvas>
         </div>
         
-        <table>
+        <table id="top-users-table-general">
           <thead>
             <tr>
               <th>Posição</th>
@@ -425,47 +519,8 @@
               <th>Streak</th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <td>🥇 1º</td>
-              <td>Gabriel Rocha Ferreira</td>
-              <td>172</td>
-              <td><strong>28.15%</strong></td>
-              <td>86.96%</td>
-              <td>2 dias</td>
-            </tr>
-            <tr>
-              <td>🥈 2º</td>
-              <td>Samira Sousa Pereira</td>
-              <td>16</td>
-              <td>2.62%</td>
-              <td>75.00%</td>
-              <td>1 dia</td>
-            </tr>
-            <tr>
-              <td>🥉 3º</td>
-              <td>Eduarda Amaral Dos Anjos</td>
-              <td>16</td>
-              <td>2.62%</td>
-              <td>93.75%</td>
-              <td>1 dia</td>
-            </tr>
-            <tr>
-              <td>4º</td>
-              <td>Maria Luiza Tavares</td>
-              <td>15</td>
-              <td>2.45%</td>
-              <td>80.00%</td>
-              <td>1 dia</td>
-            </tr>
-            <tr>
-              <td>5º</td>
-              <td>Milena Campos</td>
-              <td>8</td>
-              <td>1.31%</td>
-              <td>87.50%</td>
-              <td>0 dias</td>
-            </tr>
+          <tbody id="topUsersTableBody1">
+            <tr><td colspan="6" style="text-align: center;">Carregando dados...</td></tr>
           </tbody>
         </table>
       </div>
@@ -485,6 +540,7 @@
               </tr>
             </thead>
             <tbody id="userTableBody1">
+              <tr><td colspan="6" style="text-align: center;">Carregando dados...</td></tr>
             </tbody>
           </table>
         </div>
@@ -500,7 +556,7 @@
     
     <div class="footer">
       <p><strong>Relatório gerado pela plataforma Sappie</strong></p>
-      <p style="margin-top: 20px; opacity: 0.8;">Data: 17 de Outubro de 2025</p>
+      <p style="margin-top: 20px; opacity: 0.8;" id="footer-date-general">Data: 17 de Outubro de 2025</p>
     </div>
   </div>
 
@@ -508,27 +564,27 @@
   <div id="blome-report" class="container">
     <div class="header">
       <h1>📊 Relatório de Uso - Módulo Bloomé</h1>
-      <p>Plataforma Sappie - Outubro 2025</p>
+      <p>Plataforma Sappie - <span id="report-date-blome">Outubro 2025</span></p>
     </div>
     
     <div class="content">
       <div class="section">
         <h2 class="section-title">📈 Visão Geral</h2>
-        <div class="stats-grid">
+        <div class="stats-grid" id="stats-grid-blome">
           <div class="stat-card">
-            <div class="stat-number">33</div>
+            <div class="stat-number" id="total-users-blome">0</div>
             <div class="stat-label">Usuários Totais</div>
           </div>
           <div class="stat-card">
-            <div class="stat-number">6</div>
+            <div class="stat-number" id="active-users-blome">0</div>
             <div class="stat-label">Usuários Ativos</div>
           </div>
           <div class="stat-card">
-            <div class="stat-number">27</div>
+            <div class="stat-number" id="inactive-users-blome">0</div>
             <div class="stat-label">Usuários Inativos</div>
           </div>
           <div class="stat-card">
-            <div class="stat-number">65</div>
+            <div class="stat-number" id="total-flashcards-blome">65</div>
             <div class="stat-label">Total de Flashcards do Módulo</div>
           </div>
         </div>
@@ -536,21 +592,21 @@
         <div class="highlight-box">
           <h3>💡 Taxa de Ativação</h3>
           <div class="progress-bar">
-            <div class="progress-fill" style="width: 18.18%;">18.18%</div>
+            <div class="progress-fill" id="activation-rate-blome" style="width: 0%;">0%</div>
           </div>
-          <p style="margin-top: 15px;"><strong>6 de 33 usuários</strong> estão ativamente utilizando o módulo Bloomé.</p>
+          <p style="margin-top: 15px;" id="activation-text-blome"><strong>Carregando...</strong></p>
         </div>
       </div>
 
       <div class="section">
         <h2 class="section-title">🎯 Métricas de Engajamento</h2>
-        <div class="stats-grid">
+        <div class="stats-grid" id="engagement-stats-blome">
           <div class="stat-card">
-            <div class="stat-number">118</div>
+            <div class="stat-number" id="total-studied-blome">0</div>
             <div class="stat-label">Flashcards Estudados no Total</div>
           </div>
           <div class="stat-card">
-            <div class="stat-number">84.44%</div>
+            <div class="stat-number" id="accuracy-rate-blome">0%</div>
             <div class="stat-label">Taxa de Acerto Média</div>
           </div>
         </div>
@@ -558,9 +614,9 @@
         <div class="highlight-box">
           <h3>📊 Progresso do Treinamento</h3>
           <div class="progress-bar">
-            <div class="progress-fill" style="width: 30%; min-width: 30%;">30.31%</div>
+            <div class="progress-fill" id="completion-rate-blome" style="width: 0%; min-width: 50px;">0%</div>
           </div>
-          <p style="margin-top: 15px;"><strong>Média de 19.67 flashcards por usuário</strong> (30.31% do módulo de 65 flashcards)</p>
+          <p style="margin-top: 15px;" id="completion-text-blome"><strong>Carregando...</strong></p>
         </div>
         
         <div class="chart-container">
@@ -574,7 +630,7 @@
           <canvas id="topUsersChart2"></canvas>
         </div>
         
-        <table>
+        <table id="top-users-table-blome">
           <thead>
             <tr>
               <th>Posição</th>
@@ -585,47 +641,8 @@
               <th>Dias de Estudo</th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <td>🥇 1º</td>
-              <td>Gabriel Rocha Ferreira</td>
-              <td>65</td>
-              <td><strong>100%</strong></td>
-              <td>98.46%</td>
-              <td>1 dia</td>
-            </tr>
-            <tr>
-              <td>🥈 2º</td>
-              <td>Eduarda Amaral Dos Anjos</td>
-              <td>16</td>
-              <td>24.62%</td>
-              <td>93.75%</td>
-              <td>1 dia</td>
-            </tr>
-            <tr>
-              <td>🥉 3º</td>
-              <td>Samira Sousa Pereira</td>
-              <td>16</td>
-              <td>24.62%</td>
-              <td>75.00%</td>
-              <td>1 dia</td>
-            </tr>
-            <tr>
-              <td>4º</td>
-              <td>Maria Luiza Tavares</td>
-              <td>15</td>
-              <td>23.08%</td>
-              <td>80.00%</td>
-              <td>1 dia</td>
-            </tr>
-            <tr>
-              <td>5º</td>
-              <td>Naiara Amorim Sousa</td>
-              <td>4</td>
-              <td>6.15%</td>
-              <td>50.00%</td>
-              <td>1 dia</td>
-            </tr>
+          <tbody id="topUsersTableBody2">
+            <tr><td colspan="6" style="text-align: center;">Carregando dados...</td></tr>
           </tbody>
         </table>
       </div>
@@ -645,6 +662,7 @@
               </tr>
             </thead>
             <tbody id="userTableBody2">
+              <tr><td colspan="6" style="text-align: center;">Carregando dados...</td></tr>
             </tbody>
           </table>
         </div>
@@ -660,309 +678,38 @@
     
     <div class="footer">
       <p><strong>Relatório gerado pela plataforma Sappie</strong></p>
-      <p style="margin-top: 20px; opacity: 0.8;">Data: 17 de Outubro de 2025</p>
+      <p style="margin-top: 20px; opacity: 0.8;" id="footer-date-blome">Data: 17 de Outubro de 2025</p>
     </div>
   </div>
 
+  <!-- Load configuration and API services FIRST -->
+  <script src="js/config.js"></script>
+  <script src="js/api-service.js"></script>
+  <script src="js/app.js"></script>
+  
+  <!-- Navigation function -->
   <script>
     function showReport(reportType) {
       document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
-      document.querySelectorAll('.nav-button').forEach(b => b.classList.remove('active'));
       
       if (reportType === 'general') {
         document.getElementById('general-report').classList.add('active');
-        document.querySelectorAll('.nav-button')[0].classList.add('active');
       } else {
         document.getElementById('blome-report').classList.add('active');
-        document.querySelectorAll('.nav-button')[1].classList.add('active');
+      }
+      
+      // Update dropdown to match current report
+      document.getElementById('report-selector').value = reportType;
+      
+      // Render the selected report if app is initialized
+      if (window.dashboardApp && window.dashboardApp.generalData) {
+        window.dashboardApp.switchReport(reportType);
       }
     }
-
-    // DADOS RELATÓRIO GERAL
-    const userDataGeneral = [
-      {name: "Gabriel Rocha Ferreira", active: true, flashcards: 172, accuracy: 86.96, streak: 2},
-      {name: "Samira Sousa Pereira", active: true, flashcards: 16, accuracy: 75.00, streak: 1},
-      {name: "Eduarda Amaral Dos Anjos", active: true, flashcards: 16, accuracy: 93.75, streak: 1},
-      {name: "Maria Luiza Tavares", active: true, flashcards: 15, accuracy: 80.00, streak: 1},
-      {name: "Milena Campos", active: true, flashcards: 8, accuracy: 87.50, streak: 0},
-      {name: "Brenda Santos Silva", active: true, flashcards: 2, accuracy: 0.00, streak: 0},
-      {name: "Gabriel Moura", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Karla Larissa", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Jhenifer", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Caline", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Geromar", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Ricardo Albuquerque Cavalcanti", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Carol", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Leandro Pinheiro", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Thailine Teixeira Dos Santos", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Mariany", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Marisa Rocha Freire", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Steffane", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Emília Farias Dos Santos Kardec", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Crisnete Santos Costa Narde", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Samara", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Amanda Andrade", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Jamile", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Samira", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Micaele Oliveira Gonçalves", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Urias Rodrigues Pereira", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Rafaela", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Rebeca", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Luana", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Márjorie Wilson Silva Dantas", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Alberto Limontas", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "maria do carmo silva amorim", active: false, flashcards: 0, accuracy: 0.00, streak: 0},
-      {name: "Jessica Sousa Andrade", active: false, flashcards: 0, accuracy: 0.00, streak: 0}
-    ];
-
-    // DADOS RELATÓRIO BLOOMÉ
-    const userDataBlome = [
-      {name: "Gabriel Rocha Ferreira", active: true, flashcards: 65, accuracy: 98.46, studyDays: 1},
-      {name: "Eduarda Amaral Dos Anjos", active: true, flashcards: 16, accuracy: 93.75, studyDays: 1},
-      {name: "Samira Sousa Pereira", active: true, flashcards: 16, accuracy: 75.00, studyDays: 1},
-      {name: "Maria Luiza Tavares", active: true, flashcards: 15, accuracy: 80.00, studyDays: 1},
-      {name: "Naiara Amorim Sousa", active: true, flashcards: 4, accuracy: 50.00, studyDays: 1},
-      {name: "Brenda Santos Silva", active: true, flashcards: 2, accuracy: 0.00, studyDays: 1}
-    ];
-
-    const totalFlashcardsGeneral = 611;
-    const totalFlashcardsBlome = 65;
-
-    // Preencher tabela do relatório geral
-    const tableBody1 = document.getElementById('userTableBody1');
-    userDataGeneral.forEach(user => {
-      const percentage = ((user.flashcards / totalFlashcardsGeneral) * 100).toFixed(2);
-      const row = `
-        <tr>
-          <td>${user.name}</td>
-          <td><span class="${user.active ? 'active-badge' : 'inactive-badge'}">${user.active ? 'Ativo' : 'Inativo'}</span></td>
-          <td>${user.flashcards}</td>
-          <td>${percentage}%</td>
-          <td>${user.accuracy.toFixed(2)}%</td>
-          <td>${user.streak} dia${user.streak !== 1 ? 's' : ''}</td>
-        </tr>
-      `;
-      tableBody1.innerHTML += row;
-    });
-
-    // Preencher tabela do relatório Bloomé
-    const tableBody2 = document.getElementById('userTableBody2');
-    userDataBlome.forEach(user => {
-      const percentage = ((user.flashcards / totalFlashcardsBlome) * 100).toFixed(2);
-      const row = `
-        <tr>
-          <td>${user.name}</td>
-          <td><span class="${user.active ? 'active-badge' : 'inactive-badge'}">${user.active ? 'Ativo' : 'Inativo'}</span></td>
-          <td>${user.flashcards}</td>
-          <td>${percentage}%</td>
-          <td>${user.accuracy.toFixed(2)}%</td>
-          <td>${user.studyDays} dia${user.studyDays !== 1 ? 's' : ''}</td>
-        </tr>
-      `;
-      tableBody2.innerHTML += row;
-    });
-
-    // GRÁFICOS RELATÓRIO GERAL
-    const ctx1_1 = document.getElementById('engagementChart1').getContext('2d');
-    new Chart(ctx1_1, {
-      type: 'doughnut',
-      data: {
-        labels: ['Usuários Ativos', 'Usuários Inativos'],
-        datasets: [{
-          data: [6, 27],
-          backgroundColor: ['#4CAF50', '#FF5252'],
-          borderWidth: 2,
-          borderColor: '#fff'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: {font: {size: 14, family: 'Outfit'}, padding: 20}
-          },
-          title: {
-            display: true,
-            text: 'Distribuição de Usuários Ativos vs Inativos',
-            font: {size: 18, family: 'Outfit', weight: '600'},
-            padding: 20
-          }
-        }
-      }
-    });
-
-    const ctx1_2 = document.getElementById('topUsersChart1').getContext('2d');
-    new Chart(ctx1_2, {
-      type: 'bar',
-      data: {
-        labels: ['Gabriel R.', 'Samira S.', 'Eduarda A.', 'Maria Luiza', 'Milena C.'],
-        datasets: [{
-          label: 'Flashcards Estudados',
-          data: [172, 16, 16, 15, 8],
-          backgroundColor: '#6001AE',
-          borderRadius: 8
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {display: false},
-          title: {
-            display: true,
-            text: 'Top 5 Usuários por Flashcards Estudados',
-            font: {size: 18, family: 'Outfit', weight: '600'},
-            padding: 20
-          }
-        },
-        scales: {
-          y: {beginAtZero: true, ticks: {font: {family: 'Outfit'}}},
-          x: {ticks: {font: {family: 'Outfit'}}}
-        }
-      }
-    });
-
-    const ctx1_3 = document.getElementById('accuracyChart1').getContext('2d');
-    const activeUsersData1 = userDataGeneral.filter(u => u.active && u.accuracy > 0);
-    new Chart(ctx1_3, {
-      type: 'bar',
-      data: {
-        labels: activeUsersData1.map(u => u.name.split(' ')[0]),
-        datasets: [{
-          label: 'Taxa de Acerto (%)',
-          data: activeUsersData1.map(u => u.accuracy),
-          backgroundColor: '#8B3FD9',
-          borderRadius: 8
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {display: false},
-          title: {
-            display: true,
-            text: 'Taxa de Acerto por Usuário Ativo',
-            font: {size: 18, family: 'Outfit', weight: '600'},
-            padding: 20
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            max: 100,
-            ticks: {
-              callback: function(value) { return value + '%'; },
-              font: {family: 'Outfit'}
-            }
-          },
-          x: {ticks: {font: {family: 'Outfit'}}}
-        }
-      }
-    });
-
-    // GRÁFICOS RELATÓRIO BLOOMÉ
-    const ctx2_1 = document.getElementById('engagementChart2').getContext('2d');
-    new Chart(ctx2_1, {
-      type: 'doughnut',
-      data: {
-        labels: ['Usuários Ativos', 'Usuários Inativos'],
-        datasets: [{
-          data: [6, 27],
-          backgroundColor: ['#4CAF50', '#FF5252'],
-          borderWidth: 2,
-          borderColor: '#fff'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: {font: {size: 14, family: 'Outfit'}, padding: 20}
-          },
-          title: {
-            display: true,
-            text: 'Distribuição de Usuários Ativos vs Inativos',
-            font: {size: 18, family: 'Outfit', weight: '600'},
-            padding: 20
-          }
-        }
-      }
-    });
-
-    const ctx2_2 = document.getElementById('topUsersChart2').getContext('2d');
-    new Chart(ctx2_2, {
-      type: 'bar',
-      data: {
-        labels: ['Gabriel R.', 'Eduarda A.', 'Samira S.', 'Maria Luiza', 'Naiara A.'],
-        datasets: [{
-          label: 'Flashcards Estudados',
-          data: [65, 16, 16, 15, 4],
-          backgroundColor: '#6001AE',
-          borderRadius: 8
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {display: false},
-          title: {
-            display: true,
-            text: 'Top 5 Usuários por Flashcards Estudados',
-            font: {size: 18, family: 'Outfit', weight: '600'},
-            padding: 20
-          }
-        },
-        scales: {
-          y: {beginAtZero: true, ticks: {font: {family: 'Outfit'}}},
-          x: {ticks: {font: {family: 'Outfit'}}}
-        }
-      }
-    });
-
-    const ctx2_3 = document.getElementById('accuracyChart2').getContext('2d');
-    const activeUsersData2 = userDataBlome.filter(u => u.active && u.accuracy > 0);
-    new Chart(ctx2_3, {
-      type: 'bar',
-      data: {
-        labels: activeUsersData2.map(u => u.name.split(' ')[0]),
-        datasets: [{
-          label: 'Taxa de Acerto (%)',
-          data: activeUsersData2.map(u => u.accuracy),
-          backgroundColor: '#8B3FD9',
-          borderRadius: 8
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {display: false},
-          title: {
-            display: true,
-            text: 'Taxa de Acerto por Usuário Ativo',
-            font: {size: 18, family: 'Outfit', weight: '600'},
-            padding: 20
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            max: 100,
-            ticks: {
-              callback: function(value) { return value + '%'; },
-              font: {family: 'Outfit'}
-            }
-          },
-          x: {ticks: {font: {family: 'Outfit'}}}
-        }
-      }
-    });
+    
+    function handleReportChange(value) {
+      showReport(value);
+    }
   </script>
 </body>
 </html>

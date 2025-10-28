@@ -1,0 +1,114 @@
+name: Update Dashboard Data Daily
+
+on:
+  schedule:
+    # Runs every day at 2 AM (UTC)
+    - cron: '0 2 * * *'
+  
+  # Allows you to run this workflow manually from Actions tab
+  workflow_dispatch:
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Create data directory
+        run: mkdir -p data
+      
+      - name: Login and fetch dashboard data
+        env:
+          API_EMAIL: ${{ secrets.SAPPIE_API_EMAIL }}
+          API_PASSWORD: ${{ secrets.SAPPIE_API_PASSWORD }}
+        run: |
+          echo "🔐 Authenticating with Sappie API..."
+          
+          # Login to get bearer token
+          LOGIN_RESPONSE=$(curl -s -X POST "https://flashcard-creator.sappie.com.br/core/api/v1/auth/login" \
+            -H "Content-Type: application/json" \
+            -d "{\"email\":\"${API_EMAIL}\",\"password\":\"${API_PASSWORD}\"}")
+          
+          # Extract access token
+          ACCESS_TOKEN=$(echo $LOGIN_RESPONSE | grep -o '"accessToken":"[^"]*"' | sed 's/"accessToken":"//;s/"//')
+          
+          if [ -z "$ACCESS_TOKEN" ]; then
+            echo "❌ Failed to get access token"
+            echo "Response: $LOGIN_RESPONSE"
+            exit 1
+          fi
+          
+          echo "✅ Successfully authenticated!"
+          
+          # Function to fetch data with authentication
+          fetch_data() {
+            local endpoint=$1
+            local output_file=$2
+            local deck_id=$3
+            
+            if [ -z "$deck_id" ]; then
+              URL="https://flashcard-creator.sappie.com.br/core/api/v1/dashboard${endpoint}"
+            else
+              URL="https://flashcard-creator.sappie.com.br/core/api/v1/dashboard${endpoint}?deckId=${deck_id}"
+            fi
+            
+            echo "📡 Fetching: ${endpoint} ${deck_id:+(deck: $deck_id)}"
+            
+            HTTP_CODE=$(curl -s -w "%{http_code}" -X GET "$URL" \
+              -H "Authorization: ${ACCESS_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -o "$output_file")
+            
+            if [ "$HTTP_CODE" -eq 200 ]; then
+              echo "✅ Success: ${output_file}"
+            else
+              echo "⚠️  Warning: HTTP $HTTP_CODE for ${endpoint}"
+            fi
+          }
+          
+          # Fetch data for GENERAL REPORT (NathFarma root deck)
+          echo ""
+          echo "📊 Fetching GENERAL REPORT data..."
+          GENERAL_DECK_ID="cb70190e-5ca3-461b-8618-3d7bccc1b7c3"
+          
+          fetch_data "/big-numbers" "data/general-big-numbers.json" "$GENERAL_DECK_ID"
+          fetch_data "/user-metrics" "data/general-user-metrics.json" "$GENERAL_DECK_ID"
+          fetch_data "/product-metrics" "data/general-product-metrics.json" "$GENERAL_DECK_ID"
+          fetch_data "/user-rankings" "data/general-user-rankings.json" "$GENERAL_DECK_ID"
+          fetch_data "/streak-users" "data/general-streak-users.json" "$GENERAL_DECK_ID"
+          
+          # Fetch data for BLOOMÉ REPORT
+          echo ""
+          echo "🌸 Fetching BLOOMÉ MODULE data..."
+          BLOME_DECK_ID="939d30f7-750c-4d69-9cea-014aa04c402f"
+          
+          fetch_data "/big-numbers" "data/blome-big-numbers.json" "$BLOME_DECK_ID"
+          fetch_data "/user-metrics" "data/blome-user-metrics.json" "$BLOME_DECK_ID"
+          fetch_data "/product-metrics" "data/blome-product-metrics.json" "$BLOME_DECK_ID"
+          fetch_data "/user-rankings" "data/blome-user-rankings.json" "$BLOME_DECK_ID"
+          fetch_data "/streak-users" "data/blome-streak-users.json" "$BLOME_DECK_ID"
+          
+          # Create metadata file with timestamp
+          echo "{\"lastUpdated\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"status\":\"success\"}" > data/metadata.json
+          
+          echo ""
+          echo "✅ All data fetched successfully!"
+          echo "📁 Files created:"
+          ls -lh data/
+      
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add data/*.json
+          
+          # Only commit if there are changes
+          if git diff --staged --quiet; then
+            echo "ℹ️  No changes to commit"
+          else
+            git commit -m "🔄 Auto-update dashboard data - $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+            git push
+            echo "✅ Changes pushed successfully!"
+          fi

@@ -1,0 +1,22 @@
+[
+  {
+    "streakRange": "15+ days",
+    "userCount": 0,
+    "percentage": 0
+  },
+  {
+    "streakRange": "7-14 days",
+    "userCount": 0,
+    "percentage": 0
+  },
+  {
+    "streakRange": "1-6 days",
+    "userCount": 8,
+    "percentage": 100
+  },
+  {
+    "streakRange": "0 days",
+    "userCount": 0,
+    "percentage": 0
+  }
+]
